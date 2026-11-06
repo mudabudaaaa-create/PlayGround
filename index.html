@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#18283a">
+<title>Little Lantern Inn — Spirit Shift</title>
+<style>
+:root{color-scheme:dark;--ink:#f7edcf;--gold:#ffcf70;--panel:#19293bea;--line:#53617a}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#18283a;color:var(--ink);font-family:ui-rounded,"Trebuchet MS",system-ui,sans-serif;touch-action:none}
+body{display:grid;place-items:center;background:radial-gradient(ellipse at 50% 25%,#536879 0,#263a4d 50%,#111d2a 100%)}
+.game{position:relative;width:min(100vw,160vh);height:min(100vh,62.5vw);height:min(100dvh,62.5vw);aspect-ratio:16/10;overflow:hidden;border:3px solid #e8c98a;border-radius:12px;box-shadow:0 12px 50px #080f18c9;background:#25394a}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+.hud{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(8px,2vw,20px)}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.brand,.quest,.status{background:var(--panel);border:2px solid var(--line);border-radius:9px;box-shadow:0 3px 0 #111b29;padding:8px 12px;backdrop-filter:blur(4px)}
+.brand{font-weight:1000;font-size:clamp(14px,2.1vw,22px);letter-spacing:.04em;color:#ffda8b;text-shadow:2px 2px #644c48}.sub{display:block;font-size:clamp(9px,1.3vw,12px);font-weight:700;color:#d4dfd9;letter-spacing:0}
+.quest{max-width:48%;font-size:clamp(10px,1.4vw,14px);line-height:1.55}.quest b{color:#ffdc91}.status{font-size:clamp(10px,1.4vw,14px);text-align:right;min-width:135px}.bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}.hint{max-width:48%;font-size:clamp(10px,1.4vw,14px);background:#142335de;padding:8px 11px;border-radius:8px;border:1px solid #65758b}.controls{pointer-events:auto;display:flex;align-items:flex-end;gap:10px}.dpad{display:grid;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(2,38px);gap:3px}.btn{border:2px solid #ead097;background:#263a51eF;color:#fff4d8;border-radius:10px;font-size:17px;font-weight:900;box-shadow:0 3px #111a26;touch-action:none;user-select:none}.btn:active,.btn.is-pressed{transform:translateY(2px);box-shadow:0 1px #111a26;background:#58718b}.dpad .up{grid-column:2}.dpad .left{grid-column:1;grid-row:2}.dpad .down{grid-column:2;grid-row:2}.dpad .right{grid-column:3;grid-row:2}.action{width:76px;height:76px;border-radius:50%;background:#c66b53;color:white;font-size:12px;line-height:1.2;border-color:#ffe0a2}.action span{font-size:21px;display:block}.toast{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);background:#17283bee;border:2px solid #f4cb78;border-radius:12px;padding:12px 18px;font-size:clamp(13px,2vw,20px);font-weight:900;text-align:center;max-width:85%;box-shadow:0 5px 0 #111b29;pointer-events:none;opacity:0;transition:opacity .2s}.toast.show{opacity:1}.modal{position:absolute;inset:0;background:#101b2bd9;display:grid;place-items:center;padding:20px}.card{width:min(480px,95%);background:#24394c;border:3px solid #f3ce83;border-radius:14px;padding:24px;text-align:center;box-shadow:0 8px 0 #101b2b}.card h1{margin:0 0 8px;color:#ffdc91;font-size:clamp(24px,5vw,38px)}.card p{line-height:1.55;color:#e3e7dd}.start{border:0;border-radius:8px;padding:13px 22px;background:#d67b55;color:white;font-size:17px;font-weight:900;box-shadow:0 4px #85483c}.small{font-size:12px;color:#b9c9cc}.hide{display:none!important}
+@media(max-width:650px){.game{width:100vw;height:100dvh;aspect-ratio:auto;border-radius:0;border-width:0}.top{align-items:flex-start}.quest{max-width:46%}.status{min-width:0}.bottom{align-items:flex-end}.dpad{grid-template-columns:repeat(3,36px);grid-template-rows:repeat(2,32px)}.action{width:66px;height:66px}.hint{max-width:55%}}
+</style>
+</head>
+<body>
+<main class="game" id="game">
+<canvas id="scene" width="960" height="600" aria-label="Pixel art inn game"></canvas>
+<div class="hud">
+ <div class="top">
+  <div class="brand">✦ LITTLE LANTERN INN<span class="sub">A tiny spirit-shift adventure</span></div>
+  <div class="quest" id="quest"><b>TONIGHT'S PREP</b><br>□ Mend the wobbly stool<br>□ Brew a pot of tea<br>□ Set the welcome table</div>
+  <div class="status" id="status">👻 Free spirit<br><span class="sub">3 / 3 chores</span></div>
+ </div>
+ <div class="bottom">
+  <div class="hint" id="hint">Move with WASD / arrows. Walk up to a grown-up or station, then press <b>SPACE</b>.</div>
+  <div class="controls">
+   <div class="dpad" aria-label="Movement controls"><button class="btn up" data-dir="up">▲</button><button class="btn left" data-dir="left">◀</button><button class="btn down" data-dir="down">▼</button><button class="btn right" data-dir="right">▶</button></div>
+   <button class="btn" id="release" style="display:none;padding:8px;font-size:10px;height:42px">FLOAT FREE</button><button class="btn action" id="action"><span>✦</span>ACTION</button>
+  </div>
+ </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal" id="intro"><section class="card"><h1>Good evening, little ghost!</h1><p>The inn is almost ready, but three little jobs remain. The grown-ups have invited you to borrow their skills—<b>only when they offer</b>. Help them get everything ready before the lanterns glow!</p><p class="small">Possess an adult near them, then visit the matching station and press ACTION. The young guest is safe from spirit mischief.</p><button class="start" id="start">LET'S HELP THE INN</button></section></div>
+<div class="modal hide" id="ending"><section class="card"><h1>Lanterns aglow! ✨</h1><p>You helped the whole inn shine. Mrs. Juniper pours a celebratory cup of tea, Milo gives the stool a test wobble, and the carpenter tips his hat to the helpful little spirit.</p><button class="start" id="again">PLAY AGAIN</button></section></div>
+</main>
+<script>
+(()=>{
+const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d');
+ctx.imageSmoothingEnabled=false;
+const W=960,H=600, keys=new Set();
+const game={started:false,x:480,y:438,possessed:null,done:new Set(),toastTimer:0,walking:0,facing:'down'};
+const adults=[
+ {id:'juniper',name:'Juniper',role:'innkeeper',x:256,y:316,color:'#d98668',hair:'#513b3d',shirt:'#d88969',apron:'#f1d290',job:'table'},
+ {id:'mara',name:'Mara',role:'tea maker',x:698,y:316,color:'#e6ab74',hair:'#65413a',shirt:'#6d9d8b',apron:'#d6c18a',job:'tea'},
+ {id:'cedar',name:'Cedar',role:'carpenter',x:480,y:252,color:'#c88762',hair:'#77735e',shirt:'#7292a1',apron:'#9d7657',job:'stool'}
+];
+const child={x:156,y:434};
+const stations={stool:{x:782,y:436,label:'Wobbly stool',color:'#b77a48'},tea:{x:838,y:244,label:'Tea kettle',color:'#d8a553'},table:{x:286,y:438,label:'Welcome table',color:'#b8784e'}};
+const jobNames={stool:'Mend the wobbly stool',tea:'Brew a pot of tea',table:'Set the welcome table'};
+function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}
+function text(s,x,y,size=12,color='#fff0cc',align='center'){ctx.fillStyle=color;ctx.font=`bold ${size}px ui-rounded,system-ui,sans-serif`;ctx.textAlign=align;ctx.fillText(s,x,y)}
+function drawRoom(){
+ // warm timber walls and floor
+ rect(0,0,W,H,'#aa795b');rect(0,0,W,68,'#614a49');rect(0,68,W,344,'#d7ad79');
+ for(let x=0;x<W;x+=48){rect(x,68,2,344,'#c49368');rect(x+22,0,3,68,'#785655')}
+ // floorboards
+ rect(0,412,W,188,'#9b694c');for(let y=414;y<H;y+=31){rect(0,y,W,2,'#754f40');for(let x=(y%2?40:0);x<W;x+=160)rect(x,y,2,31,'#855a43')}
+ // windows
+ for(const x of [70,400,740]){rect(x,92,138,110,'#754f43');rect(x+8,100,122,94,'#9fc7bf');rect(x+68,100,5,94,'#754f43');rect(x+8,144,122,5,'#754f43');rect(x+16,110,28,18,'#e7d79a');rect(x+98,160,20,22,'#76a89d')}
+ // curtains and plants
+ for(const x of [65,395,735]){rect(x,86,20,125,'#bb6f5f');rect(x+128,86,20,125,'#bb6f5f');rect(x+5,205,142,7,'#78534a')}
+ // fireplace
+ rect(454,100,154,184,'#785044');rect(466,112,130,160,'#c5a078');rect(484,149,94,123,'#382f36');rect(492,227,78,34,'#d6764e');rect(506,205,17,40,'#ffc56c');rect(536,214,13,35,'#f79850');rect(546,231,20,25,'#ffe095');rect(440,278,184,15,'#895944');
+ // hearth rug
+ rect(346,382,270,24,'#c95f50');rect(362,406,238,11,'#e2af66');for(let x=370;x<598;x+=24)rect(x,389,12,10,'#f0ca80');
+ // counter and shelves
+ rect(692,128,206,16,'#754c3d');rect(704,145,10,90,'#815340');rect(875,145,10,90,'#815340');rect(705,177,177,8,'#9c6746');
+ for(let x=721;x<864;x+=35){rect(x,149,20,27,['#d18a52','#9d6562','#789782'][Math.floor(x/35)%3]);rect(x+5,154,10,8,'#e8c48a')}
+ // counter body
+ rect(728,246,190,115,'#a56543');rect(720,239,205,17,'#d0a063');rect(744,260,158,8,'#bd8150');
+ // plant decorations
+ plant(62,382);plant(906,386);plant(627,330);
+ // table
+ rect(208,441,157,18,'#d49a5a');rect(218,459,12,36,'#86563f');rect(343,459,12,36,'#86563f');
+ // stool
+ rect(755,430,54,10,'#bf8150');rect(762,440,8,37,'#79503e');rect(795,440,8,37,'#79503e');rect(754,425,57,9,'#d39b5c');
+ // tea station at counter
+ rect(818,215,34,26,'#d7aa69');rect(822,220,25,17,'#8ca9a0');rect(849,223,10,7,'#d7aa69');rect(827,212,16,5,'#f1d18c');
+ // lanterns
+ for(const x of [300,480,660]){rect(x,36,3,28,'#58434a');rect(x-9,48,21,16,'#f2c56f');rect(x-5,52,13,9,'#fff0aa')}
+}
+function plant(x,y){rect(x-10,y,22,10,'#a9724f');rect(x-7,y+10,16,22,'#805242');rect(x-18,y-20,13,20,'#65886b');rect(x-4,y-32,15,32,'#739b70');rect(x+7,y-18,17,18,'#567c65');rect(x-1,y-10,7,9,'#e5bf74')}
+function person(x,y,shirt,hair,apron,small=false,ghost=false){
+ let s=small?0.8:1;ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+ if(ghost){ctx.globalAlpha=.94;rect(-13,-31,26,28,'#c6fff0');rect(-17,-18,34,20,'#c6fff0');rect(-13,-2,7,5,'#c6fff0');rect(-2,-2,8,5,'#c6fff0');rect(-8,-22,4,5,'#294456');rect(5,-22,4,5,'#294456');rect(-5,-12,10,3,'#6da9a0');ctx.restore();return}
+ // shadow and boots
+ rect(-14,-3,28,6,'#61463c');rect(-11,-9,8,8,'#51454a');rect(3,-9,8,8,'#51454a');
+ // legs/body
+ rect(-10,-24,20,18,shirt);rect(-12,-34,24,17,shirt);rect(-9,-47,18,16,'#e5ad7f');
+ // hair cap
+ rect(-10,-50,20,6,hair);rect(-13,-44,5,9,hair);rect(8,-45,5,8,hair);
+ rect(-6,-41,3,3,'#392f35');rect(4,-41,3,3,'#392f35');rect(-2,-34,5,2,'#a45e53');
+ if(apron){rect(-8,-28,16,12,apron);rect(-7,-28,14,2,'#ffe0a0')}
+ ctx.restore();}
+function drawCharacter(){
+ for(const [id,p] of Object.entries(stations)){if(!game.done.has(id)){rect(p.x-15,p.y-2,30,3,'#ffdf86');text('✦',p.x,p.y-8,14,'#ffe29a')}}
+ adults.forEach(n=>{if(game.possessed===n.id)return;person(n.x,n.y,n.shirt,n.hair,n.apron);text(n.name,n.x,n.y+12,12,'#fff1d2')});
+ person(child.x,child.y,'#8e9dc4','#4d3e47','#edc977',true);text('Milo',child.x,child.y+12,11,'#fff1d2');
+ if(!game.possessed)person(game.x,game.y,'#fff','#b7fff0',null,false,true);
+ else{const n=adults.find(a=>a.id===game.possessed);person(game.x,game.y,n.shirt,n.hair,n.apron);text(n.name,game.x,game.y+12,12,'#fff1d2');rect(game.x-14,game.y-59,28,3,'#79f1dc');text('✦',game.x,game.y-62,14,'#8effe3')}
+}
+function draw(){
+ ctx.clearRect(0,0,W,H);drawRoom();drawCharacter();
+ // little glints and a gentle ghost aura
+ if(!game.possessed){ctx.globalAlpha=.22;rect(game.x-20,game.y-31,40,36,'#9bffe8');ctx.globalAlpha=1}
+ const target=nearby();
+ if(target){const p=target.point;text(target.label,p.x,p.y-26,13,'#fff3c9')}
+}
+function nearby(){
+ if(!game.possessed){let best=null,dist=58;for(const n of adults){const d=Math.hypot(game.x-n.x,game.y-n.y);if(d<dist){best={kind:'adult',npc:n,point:n,label:`${n.name} · ${n.role}`};dist=d}}return best}
+ let best=null,dist=55;
+ for(const [id,p] of Object.entries(stations)){if(game.done.has(id))continue;const d=Math.hypot(game.x-p.x,game.y-p.y);if(d<dist){best={kind:'station',id,point:p,label:p.label};dist=d}}
+ if(best)return best;
+ for(const n of adults){if(n.id===game.possessed)continue;const d=Math.hypot(game.x-n.x,game.y-n.y);if(d<dist){best={kind:'adult',npc:n,point:n,label:`Swap to ${n.name}`};dist=d}}
+ return best;
+}
+function say(message){const el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(game.toastTimer);game.toastTimer=setTimeout(()=>el.classList.remove('show'),2100)}
+function refreshHUD(){
+ const count=3-game.done.size;
+ document.getElementById('status').innerHTML=game.possessed?`✨ ${adults.find(n=>n.id===game.possessed).name}'s body<br><span class="sub">Borrowed with permission</span>`:`👻 Free spirit<br><span class="sub">${count} / 3 chores</span>`;
+ document.getElementById('release').style.display=game.possessed?'block':'none';
+ document.getElementById('quest').innerHTML=`<b>TONIGHT'S PREP</b><br>${['stool','tea','table'].map(id=>`${game.done.has(id)?'☑':'□'} ${jobNames[id]}`).join('<br>')}`;
+ document.getElementById('hint').innerHTML=game.possessed?`Walk to a glowing station and press <b>SPACE / ACTION</b>. Press <b>Q</b> to float free.`:`Find a grown-up who can help, then press <b>SPACE / ACTION</b>. Move with <b>WASD</b> / arrows.`;
+}
+function act(){
+ if(!game.started)return;
+ const target=nearby();
+ if(!game.possessed){if(target&&target.kind==='adult'){game.possessed=target.npc.id;game.x=target.npc.x;game.y=target.npc.y;say(`${target.npc.name} lends you a hand. Let's help!`);refreshHUD()}else say('Float close to one of the grown-ups first.');return}
+ if(target?.kind==='station'){
+  const adult=adults.find(n=>n.id===game.possessed);
+  if(target.id!==adult.job){say(`${adult.name} isn't sure how to do that job. Try another grown-up!`);return}
+  game.done.add(target.id);say(`${adult.name} finished: ${jobNames[target.id]}!`);refreshHUD();
+  if(game.done.size===3){setTimeout(()=>document.getElementById('ending').classList.remove('hide'),650)}return
+ }
+ if(target?.kind==='adult'){game.possessed=target.npc.id;game.x=target.npc.x;game.y=target.npc.y;say(`You gently swap to ${target.npc.name}'s borrowed skills.`);refreshHUD();return}
+ say('Head toward the matching glowing station, or press Q to float free.');
+}
+function release(){if(game.possessed){const n=adults.find(a=>a.id===game.possessed);game.possessed=null;game.x=Math.max(24,Math.min(W-24,game.x+25));say(`Thanks, ${n.name}! You float free.`);refreshHUD()}}
+function move(dt){if(!game.started)return;let dx=0,dy=0;if(keys.has('ArrowLeft')||keys.has('a'))dx--;if(keys.has('ArrowRight')||keys.has('d'))dx++;if(keys.has('ArrowUp')||keys.has('w'))dy--;if(keys.has('ArrowDown')||keys.has('s'))dy++;if(dx&&dy){dx*=.707;dy*=.707}if(dx||dy){game.x=Math.max(22,Math.min(W-22,game.x+dx*150*dt));game.y=Math.max(96,Math.min(H-28,game.y+dy*150*dt));game.walking+=dt*10;game.facing=dx<0?'left':dx>0?'right':dy<0?'up':'down'}}
+let last=performance.now();function loop(now){const dt=Math.min(.04,(now-last)/1000);last=now;move(dt);draw();requestAnimationFrame(loop)}
+window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys.add(e.key===' '?' ':e.key);if(e.key===' '||e.key==='Enter')act();if(e.key.toLowerCase()==='q')release()});window.addEventListener('keyup',e=>keys.delete(e.key===' '?' ':e.key));
+const action=document.getElementById('action');action.addEventListener('pointerdown',e=>{e.preventDefault();act()});document.getElementById('release').addEventListener('pointerdown',e=>{e.preventDefault();release()});
+document.querySelectorAll('[data-dir]').forEach(btn=>{const key={up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight'}[btn.dataset.dir];btn.addEventListener('pointerdown',e=>{e.preventDefault();keys.add(key);btn.classList.add('is-pressed');btn.setPointerCapture(e.pointerId)});const stop=()=>{keys.delete(key);btn.classList.remove('is-pressed')};btn.addEventListener('pointerup',stop);btn.addEventListener('pointercancel',stop);btn.addEventListener('lostpointercapture',stop)});
+document.getElementById('start').addEventListener('click',()=>{game.started=true;document.getElementById('intro').classList.add('hide');say('The grown-ups are ready to lend a hand!')});
+document.getElementById('again').addEventListener('click',()=>location.reload());
+refreshHUD();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
