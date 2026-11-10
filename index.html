@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#171310" />
+    <title>Haunted Hearth Inn</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="title">HAUNTED HEARTH INN</div>
+          <div class="subtitle">A cozy ghostly hospitality game</div>
+        </div>
+        <div class="hud" aria-label="Shift stats">
+          <div class="stat"><span>Score</span><strong id="score">0</strong></div>
+          <div class="stat"><span>Reputation</span><strong id="reputation">35</strong></div>
+          <div class="stat"><span>Spirit</span><strong id="spirit">100</strong></div>
+          <div class="stat"><span>Time</span><strong id="time">90</strong></div>
+        </div>
+      </header>
+
+      <section class="game-column" aria-label="Game">
+        <div class="game-wrap">
+          <canvas id="game" width="960" height="540" aria-label="Haunted Hearth Inn game scene"></canvas>
+        </div>
+        <div class="touch-controls" aria-label="Touch controls">
+          <div class="dpad" aria-label="Movement">
+            <button type="button" class="move up" data-key="ArrowUp" aria-label="Move up">▲</button>
+            <button type="button" class="move left" data-key="ArrowLeft" aria-label="Move left">◀</button>
+            <button type="button" class="move down" data-key="ArrowDown" aria-label="Move down">▼</button>
+            <button type="button" class="move right" data-key="ArrowRight" aria-label="Move right">▶</button>
+          </div>
+          <div class="touch-actions">
+            <button type="button" data-key="Space">Visit / release</button>
+            <button type="button" class="primary-action" data-key="KeyE">Help!</button>
+            <button type="button" data-key="KeyQ">Friendly hello</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="sidebar" aria-label="Shift information">
+        <section class="panel objective-panel">
+          <h2>Tonight’s goal</h2>
+          <p id="objective">Earn reputation by completing the highlighted request.</p>
+          <div class="request-label">CURRENT REQUEST</div>
+          <div id="tasks" class="request">New request arriving…</div>
+        </section>
+        <section class="panel">
+          <h2>Controls</h2>
+          <ul>
+            <li><kbd>WASD</kbd> / <kbd>↑↓←→</kbd> Move</li>
+            <li><kbd>Space</kbd> Visit or release a host</li>
+            <li><kbd>1</kbd>–<kbd>4</kbd> Visit an innkeeper</li>
+            <li><kbd>E</kbd> Help at the highlighted station</li>
+            <li><kbd>Q</kbd> Friendly ghostly hello</li>
+          </ul>
+        </section>
+        <section class="panel host-panel">
+          <h2>Current form</h2>
+          <div id="host">Friendly wisp</div>
+        </section>
+        <section class="panel log-panel">
+          <h2>Inn log</h2>
+          <div id="log" aria-live="polite">A fresh evening begins. Help the inn shine before nightfall!</div>
+        </section>
+        <button id="restart" class="restart" type="button">Start a fresh shift</button>
+      </aside>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>
